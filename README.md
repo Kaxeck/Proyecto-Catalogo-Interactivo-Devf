@@ -1,6 +1,6 @@
 # 🛋️ DecoHome — Catálogo Interactivo de Muebles
 
-Proyecto Final individual desarrollado bajo el stack MERN (MongoDB, Express, React con Vite, Node.js), enfocado en la exploración interactiva, filtrado y gestión de mobiliario para el hogar y oficina.
+Proyecto desarrollado bajo el stack MERN (MongoDB, Express, React con Vite, Node.js), enfocado en la exploración interactiva, filtrado y gestión de mobiliario para el hogar y oficina. La arquitectura está modularizada de forma desacoplada entre cliente (Frontend) y servidor (Backend y Base de Datos).
 
 ---
 
@@ -12,16 +12,16 @@ Proyecto Final individual desarrollado bajo el stack MERN (MongoDB, Express, Rea
 * 🔍 Realizar búsquedas en tiempo real.
 * 💰 Filtrar por rango de precios y disponibilidad de stock.
 * 📄 Consultar la ficha técnica individual de cada mueble.
-* 🛒 Gestionar un carrito de compras protegido con autenticación de usuarios basada en JWT.
+* 🛒 Gestionar un carrito de compras interactivo con persistencia local (preparado para integración con API/JWT).
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-* **Frontend:** React, Vite, Tailwind CSS, React Router DOM, React Hook Form, Zod, Axios.
-* **Backend:** Node.js, Express.js, Mongoose.
-* **Base de Datos:** MongoDB Atlas.
-* **Autenticación:** JSON Web Tokens (JWT) y cifrado de contraseñas con bcryptjs.
+* **Frontend:** React, Vite, CSS Vanilla, React Router DOM, Boxicons.
+* **Backend:** Node.js, Express.js, Mongoose *(en desarrollo colaborativo)*.
+* **Base de Datos:** MongoDB Atlas *(a cargo del desarrollador backend)*.
+* **Autenticación:** JSON Web Tokens (JWT) y cifrado con bcryptjs *(etapa backend)*.
 
 ---
 
@@ -29,8 +29,8 @@ Proyecto Final individual desarrollado bajo el stack MERN (MongoDB, Express, Rea
 
 ```text
 catalogo-muebles/
-├── frontend/             # Aplicación cliente en React + Vite
-├── backend/              # Servidor API REST en Express + Mongoose
+├── frontend/             # Aplicación cliente en React + Vite (Desarrollo Frontend)
+├── backend/              # Servidor API REST en Express + Mongoose (Desarrollo Backend)
 ├── .gitignore            # Exclusión de archivos y carpetas sensibles / dependencias
 └── README.md             # Documentación del proyecto
 ```
@@ -58,7 +58,7 @@ npm run dev
 La aplicación cliente estará disponible en `http://localhost:5173/`.
 
 ### 3. Configuración del Backend
-*(Una vez inicializado el servidor)*
+*(Módulo a cargo del desarrollador Backend y Base de Datos — en fase de construcción)*
 ```bash
 cd backend
 npm install
@@ -73,13 +73,15 @@ El desarrollo del proyecto sigue el estándar de ramificación Git Flow:
 
 * **`main`:** Código estable listo para despliegue en producción.
 * **`develop`:** Rama integradora donde convergen todas las características probadas.
-* **`feature/*`:** Ramas independientes para cada módulo (ej. `feature/setup-vite-architecture`, `feature/products-api`).
+* **`feature/*`:** Ramas independientes para cada módulo (ej. `feature/catalogo-frontend`, `feature/backend-api`).
 * **Integración:** Ningún commit se realiza directo a `main`. Todo cambio pasa por Pull Request hacia `develop`.
 
 ---
 
-## 👤 Desarrollador
+## 👥 Equipo de Desarrollo y Roles
 
-* **Autor:** [@Kaxeck](https://github.com/Kaxeck)
-* **Modalidad:** Proyecto Individual
-* **Rol:** Full-Stack Developer
+* **Frontend Developer:** [@Kaxeck](https://github.com/Kaxeck)
+  * Responsable del diseño visual, maquetación responsive, componentes modulares, enrutamiento SPA y estado global del carrito de compras.
+
+* **Backend & Database Developer:** Colaborador asignado *(o en equipo)*
+  * Responsable de la arquitectura del servidor con Express/Node.js, modelado de esquemas y conexión a MongoDB Atlas, endpoints de la API REST y autenticación de usuarios.
