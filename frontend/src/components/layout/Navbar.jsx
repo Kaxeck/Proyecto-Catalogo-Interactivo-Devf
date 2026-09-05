@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
 
-// Componente de Barra de Navegación: incluye enlaces principales, buscador, botón del carrito y menú responsivo
+// Componente de Barra de Navegación: incluye enlaces principales, buscador, botón del carrito, acceso de usuario y menú responsivo
 const Navbar = () => {
   // Control de estado para desplegar u ocultar el menú de navegación móvil
   const [menuAbierto, setMenuAbierto] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Alterna la visibilidad del menú hamburguesa en dispositivos móviles
@@ -22,6 +24,12 @@ const Navbar = () => {
   // Redirige al catálogo completo para realizar búsquedas
   const irABuscador = () => {
     navigate('/catalogo');
+    cerrarMenu();
+  };
+
+  // Redirige a la página de autenticación o perfil del usuario
+  const irAUsuario = () => {
+    navigate('/login');
     cerrarMenu();
   };
 
@@ -93,6 +101,18 @@ const Navbar = () => {
               aria-label="Buscar en el catálogo"
             >
               <i className="bx bx-search"></i>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="nav-icono-btn nav-btn-usuario"
+              onClick={irAUsuario}
+              title={isAuthenticated && user ? `Mi Cuenta (${user.nombre})` : "Iniciar Sesión o Registrarse"}
+              aria-label={isAuthenticated && user ? `Cuenta de ${user.nombre}` : "Iniciar Sesión o Registrarse"}
+            >
+              <i className={isAuthenticated ? "bx bxs-user-circle" : "bx bx-user"}></i>
+              {isAuthenticated && <span className="indicador-usuario-online" title="Sesión iniciada"></span>}
             </button>
           </li>
           <li>

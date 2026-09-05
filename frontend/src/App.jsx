@@ -13,6 +13,7 @@ import PromocionesPage from './pages/PromocionesPage';
 import IdeasPage from './pages/IdeasPage';
 import ServiciosPage from './pages/ServiciosPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import AuthPage from './pages/AuthPage';
 
 import './assets/style.css';
 
@@ -29,7 +30,7 @@ function App() {
       {/* Barra de navegación principal con accesos y contador del carrito */}
       <Navbar />
 
-      {/* Definición de rutas del catálogo y páginas de contenido */}
+      {/* Definición de rutas del catálogo, autenticación y páginas de contenido */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/promociones" element={<PromocionesPage />} />
@@ -37,6 +38,8 @@ function App() {
         <Route path="/producto/:id" element={<ProductDetailPage />} />
         <Route path="/ideas" element={<IdeasPage />} />
         <Route path="/servicios" element={<ServiciosPage />} />
+        <Route path="/login" element={<AuthPage defaultTab="login" />} />
+        <Route path="/registro" element={<AuthPage defaultTab="registro" />} />
         <Route path="*" element={<Home />} />
       </Routes>
 
