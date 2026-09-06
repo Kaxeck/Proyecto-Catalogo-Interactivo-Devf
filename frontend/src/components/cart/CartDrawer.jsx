@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useCart } from '../../hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 import Boton from '../common/Boton';
+import { createOrderRequest } from '../../services/orderService';
 
 // Panel lateral (Drawer) del Carrito: lista de productos, control de cantidades (+/-), desglose de envío y total
 const CartDrawer = () => {
@@ -18,6 +19,29 @@ const CartDrawer = () => {
   } = useCart();
 
   const navigate = useNavigate();
+
+  // Procesa la orden de compra en la API de Express (o fallback simulado si está offline)
+  const handleCheckout = async () => {
+    const totalFinal = totalPrice >= 200 ? totalPrice : totalPrice + 99;
+    const costoEnvio = totalPrice >= 200 ? 0 : 99;
+
+    await createOrderRequest({
+      productos: cart.map((item) => ({
+        producto: item.id,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioDescuento || item.precioOriginal,
+      })),
+      subtotal: totalPrice,
+      costoEnvio,
+      total: totalFinal,
+    });
+
+    alert(
+      `¡Gracias por tu compra!\nTotal procesado: $${totalFinal.toLocaleString()} MXN\nTu orden ha sido registrada con éxito.`
+    );
+    clearCart();
+    setIsCartOpen(false);
+  };
 
   // Bloquea el scroll de la página de fondo cuando el carrito está abierto para evitar desplazamiento no deseado
   useEffect(() => {
@@ -171,13 +195,7 @@ const CartDrawer = () => {
               />
               <Boton
                 texto="Continuar Compra"
-                onClick={() =>
-                  alert(
-                    `¡Gracias por tu compra simulada!\nTotal procesado: $${(
-                      totalPrice >= 200 ? totalPrice : totalPrice + 99
-                    ).toLocaleString()} MXN`
-                  )
-                }
+                onClick={handleCheckout}
                 className="btn-checkout"
               />
             </div>

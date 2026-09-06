@@ -50,7 +50,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
   }, [location.pathname]);
 
   // Manejador del envío de Inicio de Sesión
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setMensajeError('');
     setMensajeExito('');
@@ -60,7 +60,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
       return;
     }
 
-    const resultado = login(loginEmail, loginPassword);
+    const resultado = await login(loginEmail, loginPassword);
 
     if (resultado.success) {
       setMensajeExito('¡Sesión iniciada correctamente! Redirigiendo...');
@@ -73,7 +73,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
   };
 
   // Manejador del envío de Registro de Usuario
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setMensajeError('');
     setMensajeExito('');
@@ -98,7 +98,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
       return;
     }
 
-    const resultado = register({
+    const resultado = await register({
       nombre: regNombre,
       email: regEmail,
       telefono: regTelefono,
