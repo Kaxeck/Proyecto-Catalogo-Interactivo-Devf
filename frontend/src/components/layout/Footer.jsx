@@ -1,19 +1,53 @@
 import { useState } from 'react';
+import { z } from 'zod';
+
+// Esquema de validación con Zod para el formulario de Newsletter
+const newsletterSchema = z
+  .string()
+  .trim()
+  .min(1, 'Por favor, ingresa tu correo electrónico.')
+  .email('Ingresa un correo electrónico válido (ej. usuario@correo.com)');
 
 // Componente de Pie de Página: incluye formulario de Newsletter, enlaces institucionales y pasarelas de pago
 const Footer = () => {
   // Estado local para captura de correo y retroalimentación visual al usuario
   const [email, setEmail] = useState('');
-  const [suscrito, setSuscrito] = useState(false);
+  const [mensajeError, setMensajeError] = useState('');
+  const [mensajeExito, setMensajeExito] = useState('');
 
-  // Maneja el envío del formulario y resetea el campo tras confirmar suscripción
+  // Maneja el envío del formulario con validación Zod y persistencia local
   const handleSuscripcion = (e) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSuscrito(true);
-      setEmail('');
-      setTimeout(() => setSuscrito(false), 4000);
+    setMensajeError('');
+    setMensajeExito('');
+
+    // 1. Validación de esquema con Zod
+    const resultado = newsletterSchema.safeParse(email);
+    if (!resultado.success) {
+      setMensajeError(resultado.error.issues[0]?.message || 'Correo inválido.');
+      return;
     }
+
+    // 2. Control de duplicados en el almacenamiento local
+    try {
+      const suscriptores = JSON.parse(localStorage.getItem('nordic_newsletter') || '[]');
+      const correoNormalizado = email.trim().toLowerCase();
+
+      if (suscriptores.includes(correoNormalizado)) {
+        setMensajeError('Este correo electrónico ya se encuentra suscrito a nuestro Newsletter.');
+        return;
+      }
+
+      suscriptores.push(correoNormalizado);
+      localStorage.setItem('nordic_newsletter', JSON.stringify(suscriptores));
+    } catch {
+      // Continuar en caso de fallo en almacenamiento
+    }
+
+    // 3. Confirmación de suscripción exitosa
+    setMensajeExito('¡Gracias por suscribirte! Pronto recibirás novedades y descuentos exclusivos.');
+    setEmail('');
+    setTimeout(() => setMensajeExito(''), 5000);
   };
 
   return (
@@ -25,7 +59,7 @@ const Footer = () => {
           <span>nuestro Newsletter</span>
         </h2>
         <div className="contenedor-newsletter">
-          <form className="form-suscripcion" onSubmit={handleSuscripcion}>
+          <form className="form-suscripcion" onSubmit={handleSuscripcion} noValidate>
             <label htmlFor="newsletter-email">Correo Electrónico:</label>
             <div className="contenedor-form-suscripcion">
               <input
@@ -33,14 +67,26 @@ const Footer = () => {
                 type="email"
                 placeholder="Deja tu correo"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (mensajeError) setMensajeError('');
+                }}
+                className={mensajeError ? 'has-error' : ''}
               />
               <button type="submit">Suscribirse</button>
             </div>
-            {suscrito && (
-              <p className="newsletter-feedback">
-                ¡Gracias por suscribirte! Pronto recibirás novedades y descuentos exclusivos.
+
+            {/* Mensaje de error de validación */}
+            {mensajeError && (
+              <p className="newsletter-feedback error">
+                <i className="bx bx-error-circle"></i> {mensajeError}
+              </p>
+            )}
+
+            {/* Mensaje de éxito */}
+            {mensajeExito && (
+              <p className="newsletter-feedback exito">
+                <i className="bx bx-check-circle"></i> {mensajeExito}
               </p>
             )}
           </form>

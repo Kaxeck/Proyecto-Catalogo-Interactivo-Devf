@@ -1,21 +1,39 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useEffect } from 'react';
+import { loginRequest, registerRequest } from '../services/authService';
 
 // Creación del Contexto global de Autenticación
 export const AuthContext = createContext();
 
-// Proveedor de Autenticación (AuthProvider): suministra estado de usuario y métodos de autenticación
+// Proveedor de Autenticación (AuthProvider): gestiona la sesión con la API REST y soporte offline
 export const AuthProvider = ({ children }) => {
   // Estado del usuario activo, recuperado de localStorage para persistir la sesión tras recargar
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('nordic_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      const token = localStorage.getItem('token');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (token && !parsed.token) parsed.token = token;
+        return parsed;
+      }
+      // Si solo existe la clave 'token' guardada en el almacenamiento local
+      if (token) {
+        return {
+          id: 'auth_jwt_user',
+          nombre: 'Usuario Autenticado',
+          email: 'usuario@example.com',
+          token,
+          fechaRegistro: new Date().toLocaleDateString('es-MX'),
+        };
+      }
+      return null;
     } catch {
       return null;
     }
   });
 
-  // Lista simulada de usuarios registrados guardada localmente
+  // Lista simulada de usuarios registrados guardada localmente (fallback para desarrollo offline)
   const [registeredUsers, setRegisteredUsers] = useState(() => {
     try {
       const savedList = localStorage.getItem('nordic_registered_users');
@@ -25,20 +43,24 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // Sincroniza la sesión activa del usuario con localStorage
+  // Sincroniza la sesión activa del usuario y el JWT ('token') con localStorage
   useEffect(() => {
     try {
       if (user) {
         localStorage.setItem('nordic_user', JSON.stringify(user));
+        if (user.token) {
+          localStorage.setItem('token', user.token);
+        }
       } else {
         localStorage.removeItem('nordic_user');
+        localStorage.removeItem('token');
       }
     } catch (e) {
       console.error('Error al persistir usuario en localStorage:', e);
     }
   }, [user]);
 
-  // Sincroniza la lista de usuarios registrados con localStorage
+  // Sincroniza la lista de usuarios registrados locales con localStorage
   useEffect(() => {
     try {
       localStorage.setItem('nordic_registered_users', JSON.stringify(registeredUsers));
@@ -47,47 +69,85 @@ export const AuthProvider = ({ children }) => {
     }
   }, [registeredUsers]);
 
-  // Inicia sesión verificando credenciales con la lista local de usuarios registrados
-  const login = (email, password) => {
+  // Inicia sesión: intenta autenticar con el Backend Express; si está apagado, usa el fallback local
+  const login = async (email, password) => {
     const emailNormalizado = email.trim().toLowerCase();
+
+    // 1. Intentar iniciar sesión en el servidor Express con Axios
+    const apiRes = await loginRequest(emailNormalizado, password);
+
+    // Si el backend respondió exitosamente con el token JWT
+    if (apiRes.success && apiRes.user) {
+      const sesion = {
+        ...apiRes.user,
+        token: apiRes.token,
+      };
+      setUser(sesion);
+      return { success: true, user: sesion };
+    }
+
+    // Si el backend respondió con un error de credenciales legítimo (no de red)
+    if (!apiRes.networkError && apiRes.message) {
+      return { success: false, message: apiRes.message };
+    }
+
+    // 2. Fallback de desarrollo offline (mientras el backend de tu compañero está en construcción)
+    console.info('[Auth] Backend no disponible, validando con sesión local de desarrollo.');
     const usuarioEncontrado = registeredUsers.find(
       (u) => u.email.toLowerCase() === emailNormalizado
     );
 
-    // Validación: usuario no registrado previamente en la lista
     if (!usuarioEncontrado) {
-      // Para efectos de prueba demostrativa fluida, crea y conecta la cuenta
       const usuarioDemo = {
         id: Date.now(),
         nombre: emailNormalizado.split('@')[0],
         email: emailNormalizado,
         fechaRegistro: new Date().toLocaleDateString('es-MX'),
+        token: 'demo_jwt_token_local',
       };
       setUser(usuarioDemo);
       return { success: true, user: usuarioDemo };
     }
 
-    // Validación: contraseña incorrecta
     if (usuarioEncontrado.password !== password) {
       return { success: false, message: 'La contraseña ingresada es incorrecta.' };
     }
 
-    // Inicio de sesión exitoso
     const sesionUsuario = {
       id: usuarioEncontrado.id,
       nombre: usuarioEncontrado.nombre,
       email: usuarioEncontrado.email,
       telefono: usuarioEncontrado.telefono || '',
       fechaRegistro: usuarioEncontrado.fechaRegistro || new Date().toLocaleDateString('es-MX'),
+      token: 'demo_jwt_token_local',
     };
 
     setUser(sesionUsuario);
     return { success: true, user: sesionUsuario };
   };
 
-  // Registra un nuevo usuario en la lista persistente e inicia su sesión de forma automática
-  const register = (datos) => {
+  // Registra un nuevo usuario en la API de Express (o fallback local si el backend está offline)
+  const register = async (datos) => {
     const emailNormalizado = datos.email.trim().toLowerCase();
+
+    // 1. Intentar registrar en el servidor Express con Axios
+    const apiRes = await registerRequest(datos);
+
+    if (apiRes.success && apiRes.user) {
+      const sesion = {
+        ...apiRes.user,
+        token: apiRes.token,
+      };
+      setUser(sesion);
+      return { success: true, user: sesion };
+    }
+
+    if (!apiRes.networkError && apiRes.message) {
+      return { success: false, message: apiRes.message };
+    }
+
+    // 2. Fallback local de desarrollo
+    console.info('[Auth] Backend no disponible, registrando en almacenamiento local de desarrollo.');
     const existe = registeredUsers.some(
       (u) => u.email.toLowerCase() === emailNormalizado
     );
@@ -107,13 +167,13 @@ export const AuthProvider = ({ children }) => {
 
     setRegisteredUsers((prev) => [...prev, nuevoUsuario]);
 
-    // Establece la sesión activa del usuario recién registrado
     const sesionUsuario = {
       id: nuevoUsuario.id,
       nombre: nuevoUsuario.nombre,
       email: nuevoUsuario.email,
       telefono: nuevoUsuario.telefono,
       fechaRegistro: nuevoUsuario.fechaRegistro,
+      token: 'demo_jwt_token_local',
     };
     setUser(sesionUsuario);
 

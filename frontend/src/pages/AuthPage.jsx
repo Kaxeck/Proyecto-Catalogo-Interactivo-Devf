@@ -1,131 +1,180 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import Boton from '../components/common/Boton';
 
-// Página de Autenticación: unifica el Inicio de Sesión, Registro de Cuenta y Panel de Usuario
+// ==========================================
+// Esquemas de Validación con Zod (Frontend)
+// ==========================================
+
+// Esquema de validación para el Inicio de Sesión
+const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'El correo electrónico es obligatorio')
+    .email('Ingresa un correo electrónico con formato válido (ej. usuario@correo.com)'),
+  password: z
+    .string()
+    .min(1, 'La contraseña es obligatoria')
+    .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  recordarSesion: z.boolean().optional(),
+});
+
+// Esquema de validación para el Registro de Usuario
+const registerSchema = z
+  .object({
+    nombre: z
+      .string()
+      .trim()
+      .min(1, 'El nombre completo es obligatorio')
+      .min(3, 'El nombre debe contener al menos 3 caracteres'),
+    email: z
+      .string()
+      .trim()
+      .min(1, 'El correo electrónico es obligatorio')
+      .email('Ingresa un correo electrónico con formato válido (ej. usuario@correo.com)'),
+    telefono: z.string().trim().optional(),
+    password: z
+      .string()
+      .min(1, 'La contraseña es obligatoria')
+      .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+    confirmPassword: z
+      .string()
+      .min(1, 'Confirma tu contraseña'),
+    aceptaTerminos: z.boolean().refine((val) => val === true, {
+      message: 'Debes aceptar los Términos y Condiciones para crear tu cuenta',
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Las contraseñas ingresadas no coinciden',
+    path: ['confirmPassword'],
+  });
+
+/**
+ * Página de Autenticación (Login, Registro y Panel de Perfil)
+ * Integra validaciones avanzadas con React Hook Form y esquemas de Zod
+ */
 const AuthPage = ({ defaultTab = 'login' }) => {
   const { user, isAuthenticated, login, register, logout } = useAuth();
   const { setIsCartOpen } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determina la pestaña inicial según la ruta ("/registro" o "/login") o la propiedad defaultTab
-  const [tabActiva, setTabActiva] = useState(() => {
-    if (location.pathname === '/registro' || defaultTab === 'registro') {
-      return 'registro';
-    }
-    return 'login';
-  });
+  // Control de pestaña activa derivado de la URL actual
+  const tabActiva =
+    location.pathname === '/registro' || (location.pathname !== '/login' && defaultTab === 'registro')
+      ? 'registro'
+      : 'login';
 
-  // Estados del formulario de Inicio de Sesión
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  // Sincronizar limpieza de mensajes cuando cambia la ruta
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
+    setMensajeError('');
+    setMensajeExito('');
+  }
+
+  const cambiarTab = (nuevaTab) => {
+    navigate(nuevaTab === 'registro' ? '/registro' : '/login');
+    setMensajeError('');
+    setMensajeExito('');
+  };
+
+  // Visibilidad de contraseñas
   const [mostrarPasswordLogin, setMostrarPasswordLogin] = useState(false);
-  const [recordarSesion, setRecordarSesion] = useState(true);
-
-  // Estados del formulario de Registro
-  const [regNombre, setRegNombre] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regTelefono, setRegTelefono] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [mostrarPasswordReg, setMostrarPasswordReg] = useState(false);
-  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
-  // Mensajes de retroalimentación
+  // Mensajes de retroalimentación de la API o servidor
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
 
-  // Sincroniza la pestaña activa si la ruta cambia de /login a /registro o viceversa
-  useEffect(() => {
-    if (location.pathname === '/registro') {
-      setTabActiva('registro');
-    } else if (location.pathname === '/login') {
-      setTabActiva('login');
-    }
-    setMensajeError('');
-    setMensajeExito('');
-  }, [location.pathname]);
+  // 1. Hook Form para Inicio de Sesión
+  const {
+    register: registerLogin,
+    handleSubmit: handleLoginSubmit,
+    formState: { errors: loginErrors, isSubmitting: isLoggingIn },
+    reset: resetLogin,
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      email: '',
+      password: '',
+      recordarSesion: true,
+    },
+  });
+
+  // 2. Hook Form para Registro de Cuenta
+  const {
+    register: registerRegister,
+    handleSubmit: handleRegisterSubmit,
+    formState: { errors: regErrors, isSubmitting: isRegistering },
+    reset: resetRegister,
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      nombre: '',
+      email: '',
+      telefono: '',
+      password: '',
+      confirmPassword: '',
+      aceptaTerminos: false,
+    },
+  });
 
   // Manejador del envío de Inicio de Sesión
-  const handleLoginSubmit = (e) => {
-    e.preventDefault();
+  const onLoginSubmit = async (data) => {
     setMensajeError('');
     setMensajeExito('');
 
-    if (!loginEmail.trim() || !loginPassword) {
-      setMensajeError('Por favor, ingresa tu correo electrónico y contraseña.');
-      return;
-    }
-
-    const resultado = login(loginEmail, loginPassword);
+    const resultado = await login(data.email, data.password);
 
     if (resultado.success) {
       setMensajeExito('¡Sesión iniciada correctamente! Redirigiendo...');
+      resetLogin();
       setTimeout(() => {
-        navigate('/catalogo');
-      }, 1200);
+        navigate('/profile');
+      }, 1000);
     } else {
       setMensajeError(resultado.message || 'Error al iniciar sesión.');
     }
   };
 
-  // Manejador del envío de Registro de Usuario
-  const handleRegisterSubmit = (e) => {
-    e.preventDefault();
+  // Manejador del envío de Registro
+  const onRegisterSubmit = async (data) => {
     setMensajeError('');
     setMensajeExito('');
 
-    if (!regNombre.trim() || !regEmail.trim() || !regPassword) {
-      setMensajeError('Por favor, completa todos los campos requeridos.');
-      return;
-    }
-
-    if (regPassword.length < 6) {
-      setMensajeError('La contraseña debe contener al menos 6 caracteres.');
-      return;
-    }
-
-    if (regPassword !== regConfirmPassword) {
-      setMensajeError('Las contraseñas ingresadas no coinciden.');
-      return;
-    }
-
-    if (!aceptaTerminos) {
-      setMensajeError('Debes aceptar los Términos y Condiciones para crear tu cuenta.');
-      return;
-    }
-
-    const resultado = register({
-      nombre: regNombre,
-      email: regEmail,
-      telefono: regTelefono,
-      password: regPassword,
+    const resultado = await register({
+      nombre: data.nombre,
+      email: data.email,
+      telefono: data.telefono,
+      password: data.password,
     });
 
     if (resultado.success) {
       setMensajeExito('¡Cuenta creada con éxito! Bienvenido a Muebles Nordic.');
+      resetRegister();
       setTimeout(() => {
-        navigate('/catalogo');
-      }, 1200);
+        navigate('/profile');
+      }, 1000);
     } else {
       setMensajeError(resultado.message || 'Error al crear la cuenta.');
     }
   };
 
-  // Acción simulada de recuperación de contraseña
+  // Acción de recuperación de contraseña simulada
   const handleRecuperarPassword = () => {
-    const correo = loginEmail.trim();
-    if (!correo) {
-      alert('Ingresa tu correo electrónico en el campo para enviarte las instrucciones de recuperación.');
-    } else {
-      alert(`Hemos enviado un enlace de recuperación al correo: ${correo}`);
-    }
+    alert('Ingresa tu correo electrónico en el campo correspondiente para enviarte las instrucciones.');
   };
 
-  // Si el usuario ya se encuentra autenticado, mostramos su panel de perfil
+  // Si el usuario ya está autenticado, mostramos su panel de perfil
   if (isAuthenticated && user) {
     return (
       <main className="auth-pagina-contenedor">
@@ -154,6 +203,10 @@ const AuthPage = ({ defaultTab = 'login' }) => {
             <div className="auth-perfil-fila">
               <span>Fecha de registro:</span>
               <strong>{user.fechaRegistro || 'Reciente'}</strong>
+            </div>
+            <div className="auth-perfil-fila">
+              <span>Estado de la cuenta:</span>
+              <strong style={{ color: '#2e7d32' }}>Activa y Verificada</strong>
             </div>
           </div>
 
@@ -189,7 +242,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
   return (
     <main className="auth-pagina-contenedor">
       <div className="auth-card">
-        {/* Encabezado con logotipo e indicador de marca */}
+        {/* Encabezado con logotipo de la tienda */}
         <div className="auth-header">
           <img src="/img/Logo.png" alt="Logo Nordic" className="auth-logo-img" />
           <h1>Bienvenido a Muebles Nordic</h1>
@@ -203,11 +256,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
             role="tab"
             aria-selected={tabActiva === 'login'}
             className={`auth-tab-btn ${tabActiva === 'login' ? 'activa' : ''}`}
-            onClick={() => {
-              setTabActiva('login');
-              setMensajeError('');
-              setMensajeExito('');
-            }}
+            onClick={() => cambiarTab('login')}
           >
             <i className="bx bx-log-in-circle"></i> Iniciar Sesión
           </button>
@@ -216,17 +265,13 @@ const AuthPage = ({ defaultTab = 'login' }) => {
             role="tab"
             aria-selected={tabActiva === 'registro'}
             className={`auth-tab-btn ${tabActiva === 'registro' ? 'activa' : ''}`}
-            onClick={() => {
-              setTabActiva('registro');
-              setMensajeError('');
-              setMensajeExito('');
-            }}
+            onClick={() => cambiarTab('registro')}
           >
             <i className="bx bx-user-plus"></i> Crear Cuenta
           </button>
         </div>
 
-        {/* Notificaciones de error y éxito */}
+        {/* Notificaciones globales de error o éxito */}
         {mensajeError && (
           <div className="auth-alerta error" role="alert">
             <i className="bx bx-error-circle"></i>
@@ -241,35 +286,40 @@ const AuthPage = ({ defaultTab = 'login' }) => {
           </div>
         )}
 
-        {/* Formulario de Inicio de Sesión */}
+        {/* ==================================================== */}
+        {/* Formulario de Inicio de Sesión con React Hook Form */}
+        {/* ==================================================== */}
         {tabActiva === 'login' && (
-          <form className="auth-form" onSubmit={handleLoginSubmit}>
+          <form className="auth-form" onSubmit={handleLoginSubmit(onLoginSubmit)} noValidate>
             <div className="auth-campo">
               <label htmlFor="login-email">Correo Electrónico:</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${loginErrors.email ? 'has-error' : ''}`}>
                 <i className="bx bx-envelope auth-input-icono"></i>
                 <input
                   id="login-email"
                   type="email"
                   placeholder="ejemplo@correo.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  required
+                  autoComplete="email"
+                  {...registerLogin('email')}
                 />
               </div>
+              {loginErrors.email && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {loginErrors.email.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-campo">
               <label htmlFor="login-password">Contraseña:</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${loginErrors.password ? 'has-error' : ''}`}>
                 <i className="bx bx-lock-alt auth-input-icono"></i>
                 <input
                   id="login-password"
                   type={mostrarPasswordLogin ? 'text' : 'password'}
                   placeholder="Ingresa tu contraseña"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
+                  autoComplete="current-password"
+                  {...registerLogin('password')}
                 />
                 <button
                   type="button"
@@ -281,14 +331,18 @@ const AuthPage = ({ defaultTab = 'login' }) => {
                   <i className={`bx ${mostrarPasswordLogin ? 'bx-show' : 'bx-hide'}`}></i>
                 </button>
               </div>
+              {loginErrors.password && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {loginErrors.password.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-fila-opciones">
               <label className="auth-checkbox-label">
                 <input
                   type="checkbox"
-                  checked={recordarSesion}
-                  onChange={(e) => setRecordarSesion(e.target.checked)}
+                  {...registerLogin('recordarSesion')}
                 />
                 <span>Recordar sesión</span>
               </label>
@@ -303,8 +357,9 @@ const AuthPage = ({ defaultTab = 'login' }) => {
 
             <Boton
               type="submit"
-              texto="Ingresar a mi Cuenta"
+              texto={isLoggingIn ? 'Iniciando sesión...' : 'Ingresar a mi Cuenta'}
               className="btn-primary"
+              disabled={isLoggingIn}
               style={{ width: '100%', padding: '13px', fontSize: '1.05rem', marginTop: '10px' }}
             />
 
@@ -313,7 +368,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
               <button
                 type="button"
                 className="auth-link-accion"
-                onClick={() => setTabActiva('registro')}
+                onClick={() => cambiarTab('registro')}
               >
                 Crear una cuenta gratis
               </button>
@@ -321,65 +376,78 @@ const AuthPage = ({ defaultTab = 'login' }) => {
           </form>
         )}
 
-        {/* Formulario de Registro de Usuario */}
+        {/* ==================================================== */}
+        {/* Formulario de Registro de Usuario con React Hook Form */}
+        {/* ==================================================== */}
         {tabActiva === 'registro' && (
-          <form className="auth-form" onSubmit={handleRegisterSubmit}>
+          <form className="auth-form" onSubmit={handleRegisterSubmit(onRegisterSubmit)} noValidate>
             <div className="auth-campo">
               <label htmlFor="reg-nombre">Nombre Completo:</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${regErrors.nombre ? 'has-error' : ''}`}>
                 <i className="bx bx-user auth-input-icono"></i>
                 <input
                   id="reg-nombre"
                   type="text"
                   placeholder="Ej. Ana Morales"
-                  value={regNombre}
-                  onChange={(e) => setRegNombre(e.target.value)}
-                  required
+                  autoComplete="name"
+                  {...registerRegister('nombre')}
                 />
               </div>
+              {regErrors.nombre && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {regErrors.nombre.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-campo">
               <label htmlFor="reg-email">Correo Electrónico:</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${regErrors.email ? 'has-error' : ''}`}>
                 <i className="bx bx-envelope auth-input-icono"></i>
                 <input
                   id="reg-email"
                   type="email"
                   placeholder="tu@correo.com"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  required
+                  autoComplete="email"
+                  {...registerRegister('email')}
                 />
               </div>
+              {regErrors.email && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {regErrors.email.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-campo">
               <label htmlFor="reg-telefono">Teléfono (opcional para entregas):</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${regErrors.telefono ? 'has-error' : ''}`}>
                 <i className="bx bx-phone auth-input-icono"></i>
                 <input
                   id="reg-telefono"
                   type="tel"
                   placeholder="+52 55 1234 5678"
-                  value={regTelefono}
-                  onChange={(e) => setRegTelefono(e.target.value)}
+                  autoComplete="tel"
+                  {...registerRegister('telefono')}
                 />
               </div>
+              {regErrors.telefono && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {regErrors.telefono.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-campo">
               <label htmlFor="reg-password">Contraseña (mínimo 6 caracteres):</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${regErrors.password ? 'has-error' : ''}`}>
                 <i className="bx bx-lock-alt auth-input-icono"></i>
                 <input
                   id="reg-password"
                   type={mostrarPasswordReg ? 'text' : 'password'}
                   placeholder="Crea una contraseña segura"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  required
-                  minLength={6}
+                  autoComplete="new-password"
+                  {...registerRegister('password')}
                 />
                 <button
                   type="button"
@@ -391,41 +459,54 @@ const AuthPage = ({ defaultTab = 'login' }) => {
                   <i className={`bx ${mostrarPasswordReg ? 'bx-show' : 'bx-hide'}`}></i>
                 </button>
               </div>
+              {regErrors.password && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {regErrors.password.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-campo">
               <label htmlFor="reg-confirm">Confirmar Contraseña:</label>
-              <div className="auth-input-wrapper">
+              <div className={`auth-input-wrapper ${regErrors.confirmPassword ? 'has-error' : ''}`}>
                 <i className="bx bx-check-shield auth-input-icono"></i>
                 <input
                   id="reg-confirm"
                   type={mostrarPasswordReg ? 'text' : 'password'}
                   placeholder="Repite tu contraseña"
-                  value={regConfirmPassword}
-                  onChange={(e) => setRegConfirmPassword(e.target.value)}
-                  required
+                  autoComplete="new-password"
+                  {...registerRegister('confirmPassword')}
                 />
               </div>
+              {regErrors.confirmPassword && (
+                <span className="auth-error-inline">
+                  <i className="bx bx-error-circle"></i> {regErrors.confirmPassword.message}
+                </span>
+              )}
             </div>
 
             <div className="auth-fila-terminos">
               <label className="auth-checkbox-label">
                 <input
                   type="checkbox"
-                  checked={aceptaTerminos}
-                  onChange={(e) => setAceptaTerminos(e.target.checked)}
-                  required
+                  {...registerRegister('aceptaTerminos')}
                 />
                 <span>
                   Acepto los <a href="#terminos" onClick={(e) => e.preventDefault()}>Términos y Condiciones</a> y la Política de Privacidad de Nordic.
                 </span>
               </label>
             </div>
+            {regErrors.aceptaTerminos && (
+              <span className="auth-error-inline" style={{ marginTop: '-8px', marginBottom: '8px' }}>
+                <i className="bx bx-error-circle"></i> {regErrors.aceptaTerminos.message}
+              </span>
+            )}
 
             <Boton
               type="submit"
-              texto="Registrar mi Cuenta"
+              texto={isRegistering ? 'Creando cuenta...' : 'Registrar mi Cuenta'}
               className="btn-secondary"
+              disabled={isRegistering}
               style={{ width: '100%', padding: '13px', fontSize: '1.05rem', marginTop: '10px' }}
             />
 
@@ -434,7 +515,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
               <button
                 type="button"
                 className="auth-link-accion"
-                onClick={() => setTabActiva('login')}
+                onClick={() => cambiarTab('login')}
               >
                 Inicia sesión aquí
               </button>

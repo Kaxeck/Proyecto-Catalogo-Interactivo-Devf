@@ -1,29 +1,36 @@
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 
-// Tarjeta de Producto: muestra fotografía, precios con descuento, interacción de favoritos y acción rápida de compra
-const ProductCard = ({ producto }) => {
+/**
+ * Tarjeta de Producto (ProductCard)
+ * Optimizado con React.memo para evitar re-renders innecesarios en listas grandes de productos
+ */
+const ProductCard = memo(({ producto }) => {
   const [esFavorito, setEsFavorito] = useState(false);
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
   // Alterna el estado del corazón de favoritos sin disparar la navegación al detalle
-  const toggleFavorito = (e) => {
+  const toggleFavorito = useCallback((e) => {
     e.stopPropagation();
-    setEsFavorito(!esFavorito);
-  };
+    setEsFavorito((prev) => !prev);
+  }, []);
 
   // Agrega el mueble directamente al carrito sin activar la navegación de la tarjeta
-  const handleAddToCart = (e) => {
+  const handleAddToCart = useCallback((e) => {
     e.stopPropagation();
     addToCart(producto);
-  };
+  }, [addToCart, producto]);
+
+  const handleNavegarDetalle = useCallback(() => {
+    navigate(`/producto/${producto.id}`);
+  }, [navigate, producto.id]);
 
   return (
     <div
       className="producto-tarjeta"
-      onClick={() => navigate(`/producto/${producto.id}`)}
+      onClick={handleNavegarDetalle}
       style={{ cursor: 'pointer' }}
       title={`Ver detalles de ${producto.nombre}`}
     >
@@ -58,6 +65,8 @@ const ProductCard = ({ producto }) => {
       </button>
     </div>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;

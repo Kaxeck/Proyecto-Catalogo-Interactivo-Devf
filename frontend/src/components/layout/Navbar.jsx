@@ -27,9 +27,13 @@ const Navbar = () => {
     cerrarMenu();
   };
 
-  // Redirige a la página de autenticación o perfil del usuario
+  // Redirige a la ruta privada del perfil si está autenticado, o al login si es invitado
   const irAUsuario = () => {
-    navigate('/login');
+    if (isAuthenticated) {
+      navigate('/profile');
+    } else {
+      navigate('/login');
+    }
     cerrarMenu();
   };
 

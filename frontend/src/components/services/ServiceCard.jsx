@@ -1,5 +1,10 @@
-// Tarjeta de Servicio: destaca beneficios comerciales (envíos, atención al cliente y garantías) con iconografía Boxicons
-const ServiceCard = ({ servicio }) => {
+import { memo } from 'react';
+
+/**
+ * Tarjeta de Servicio (ServiceCard)
+ * Optimizado con React.memo para evitar re-renderizados estáticos
+ */
+const ServiceCard = memo(({ servicio }) => {
   return (
     <article className="servicios-card">
       <i className={servicio.icono}></i>
@@ -11,6 +16,8 @@ const ServiceCard = ({ servicio }) => {
       <p>{servicio.descripcion2}</p>
     </article>
   );
-};
+});
+
+ServiceCard.displayName = 'ServiceCard';
 
 export default ServiceCard;
