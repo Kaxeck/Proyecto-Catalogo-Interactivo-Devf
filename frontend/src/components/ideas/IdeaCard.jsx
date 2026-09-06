@@ -1,5 +1,10 @@
-// Tarjeta de Idea de diseño: presenta fotografía, recomendación estética y ficha del diseñador de interiores
-const IdeaCard = ({ idea }) => {
+import { memo } from 'react';
+
+/**
+ * Tarjeta de Idea de diseño (IdeaCard)
+ * Optimizado con React.memo para evitar re-renderizados estáticos
+ */
+const IdeaCard = memo(({ idea }) => {
   return (
     <article className="idea-tarjeta">
       <img src={idea.imagen} alt={idea.titulo} className="idea-img" loading="lazy" />
@@ -20,6 +25,8 @@ const IdeaCard = ({ idea }) => {
       </div>
     </article>
   );
-};
+});
+
+IdeaCard.displayName = 'IdeaCard';
 
 export default IdeaCard;

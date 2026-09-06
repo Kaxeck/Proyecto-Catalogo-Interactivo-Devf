@@ -2542,3 +2542,41 @@ footer p {
         font-size: 0.6rem;
     }
 }
+
+/* ==========================================================================
+   SPINNER DE CARGA PARA SUSPENSE (LAZY LOADING)
+   ========================================================================== */
+.loading-fallback-contenedor {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 45vh;
+    padding: 3rem 1rem;
+    gap: 16px;
+}
+
+.spinner-aro {
+    width: 44px;
+    height: 44px;
+    border: 3.5px solid #E0E0E0;
+    border-top-color: #65D8BC;
+    border-radius: 50%;
+    animation: girarSpinner 0.8s linear infinite;
+}
+
+.loading-texto {
+    font-family: "Poppins", sans-serif;
+    font-size: 0.95rem;
+    color: #7F8C8D;
+    font-weight: 500;
+}
+
+@keyframes girarSpinner {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
