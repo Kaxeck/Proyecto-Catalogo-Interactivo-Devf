@@ -13,6 +13,14 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     try {
+      // 1. Obtención directa del token JWT
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+        return config;
+      }
+
+      // 2. Fallback por si la sesión está empaquetada en el objeto 'nordic_user'
       const savedUser = localStorage.getItem('nordic_user');
       if (savedUser) {
         const user = JSON.parse(savedUser);

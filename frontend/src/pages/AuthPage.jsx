@@ -65,8 +65,8 @@ const AuthPage = ({ defaultTab = 'login' }) => {
     if (resultado.success) {
       setMensajeExito('¡Sesión iniciada correctamente! Redirigiendo...');
       setTimeout(() => {
-        navigate('/catalogo');
-      }, 1200);
+        navigate('/profile');
+      }, 1000);
     } else {
       setMensajeError(resultado.message || 'Error al iniciar sesión.');
     }
@@ -108,8 +108,8 @@ const AuthPage = ({ defaultTab = 'login' }) => {
     if (resultado.success) {
       setMensajeExito('¡Cuenta creada con éxito! Bienvenido a Muebles Nordic.');
       setTimeout(() => {
-        navigate('/catalogo');
-      }, 1200);
+        navigate('/profile');
+      }, 1000);
     } else {
       setMensajeError(resultado.message || 'Error al crear la cuenta.');
     }

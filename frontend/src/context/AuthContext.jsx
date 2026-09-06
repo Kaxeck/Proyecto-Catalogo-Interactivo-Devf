@@ -10,7 +10,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('nordic_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      const token = localStorage.getItem('token');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (token && !parsed.token) parsed.token = token;
+        return parsed;
+      }
+      // Si solo existe la clave 'token' guardada en el almacenamiento local
+      if (token) {
+        return {
+          id: 'auth_jwt_user',
+          nombre: 'Usuario Autenticado',
+          email: 'usuario@example.com',
+          token,
+          fechaRegistro: new Date().toLocaleDateString('es-MX'),
+        };
+      }
+      return null;
     } catch {
       return null;
     }
@@ -26,13 +42,17 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // Sincroniza la sesión activa del usuario con localStorage
+  // Sincroniza la sesión activa del usuario y el JWT ('token') con localStorage
   useEffect(() => {
     try {
       if (user) {
         localStorage.setItem('nordic_user', JSON.stringify(user));
+        if (user.token) {
+          localStorage.setItem('token', user.token);
+        }
       } else {
         localStorage.removeItem('nordic_user');
+        localStorage.removeItem('token');
       }
     } catch (e) {
       console.error('Error al persistir usuario en localStorage:', e);

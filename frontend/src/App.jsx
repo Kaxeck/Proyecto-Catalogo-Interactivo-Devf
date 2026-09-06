@@ -14,6 +14,8 @@ import IdeasPage from './pages/IdeasPage';
 import ServiciosPage from './pages/ServiciosPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import AuthPage from './pages/AuthPage';
+import ProfilePage from './pages/ProfilePage';
+import PrivateRoute from './components/common/PrivateRoute';
 
 import './assets/style.css';
 
@@ -40,6 +42,25 @@ function App() {
         <Route path="/servicios" element={<ServiciosPage />} />
         <Route path="/login" element={<AuthPage defaultTab="login" />} />
         <Route path="/registro" element={<AuthPage defaultTab="registro" />} />
+
+        {/* Rutas Privadas: protegidas con JWT mediante el componente PrivateRoute */}
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <ProfilePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <PrivateRoute>
+              <ProfilePage />
+            </PrivateRoute>
+          }
+        />
+
         <Route path="*" element={<Home />} />
       </Routes>
 
