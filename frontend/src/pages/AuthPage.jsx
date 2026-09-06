@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,13 +65,25 @@ const AuthPage = ({ defaultTab = 'login' }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Control de pestaña activa: 'login' o 'registro'
-  const [tabActiva, setTabActiva] = useState(() => {
-    if (location.pathname === '/registro' || defaultTab === 'registro') {
-      return 'registro';
-    }
-    return 'login';
-  });
+  // Control de pestaña activa derivado de la URL actual
+  const tabActiva =
+    location.pathname === '/registro' || (location.pathname !== '/login' && defaultTab === 'registro')
+      ? 'registro'
+      : 'login';
+
+  // Sincronizar limpieza de mensajes cuando cambia la ruta
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
+    setMensajeError('');
+    setMensajeExito('');
+  }
+
+  const cambiarTab = (nuevaTab) => {
+    navigate(nuevaTab === 'registro' ? '/registro' : '/login');
+    setMensajeError('');
+    setMensajeExito('');
+  };
 
   // Visibilidad de contraseñas
   const [mostrarPasswordLogin, setMostrarPasswordLogin] = useState(false);
@@ -115,17 +127,6 @@ const AuthPage = ({ defaultTab = 'login' }) => {
       aceptaTerminos: false,
     },
   });
-
-  // Sincroniza la pestaña si la ruta cambia entre /login y /registro
-  useEffect(() => {
-    if (location.pathname === '/registro') {
-      setTabActiva('registro');
-    } else if (location.pathname === '/login') {
-      setTabActiva('login');
-    }
-    setMensajeError('');
-    setMensajeExito('');
-  }, [location.pathname]);
 
   // Manejador del envío de Inicio de Sesión
   const onLoginSubmit = async (data) => {
@@ -255,11 +256,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
             role="tab"
             aria-selected={tabActiva === 'login'}
             className={`auth-tab-btn ${tabActiva === 'login' ? 'activa' : ''}`}
-            onClick={() => {
-              setTabActiva('login');
-              setMensajeError('');
-              setMensajeExito('');
-            }}
+            onClick={() => cambiarTab('login')}
           >
             <i className="bx bx-log-in-circle"></i> Iniciar Sesión
           </button>
@@ -268,11 +265,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
             role="tab"
             aria-selected={tabActiva === 'registro'}
             className={`auth-tab-btn ${tabActiva === 'registro' ? 'activa' : ''}`}
-            onClick={() => {
-              setTabActiva('registro');
-              setMensajeError('');
-              setMensajeExito('');
-            }}
+            onClick={() => cambiarTab('registro')}
           >
             <i className="bx bx-user-plus"></i> Crear Cuenta
           </button>
@@ -375,7 +368,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
               <button
                 type="button"
                 className="auth-link-accion"
-                onClick={() => setTabActiva('registro')}
+                onClick={() => cambiarTab('registro')}
               >
                 Crear una cuenta gratis
               </button>
@@ -522,7 +515,7 @@ const AuthPage = ({ defaultTab = 'login' }) => {
               <button
                 type="button"
                 className="auth-link-accion"
-                onClick={() => setTabActiva('login')}
+                onClick={() => cambiarTab('login')}
               >
                 Inicia sesión aquí
               </button>

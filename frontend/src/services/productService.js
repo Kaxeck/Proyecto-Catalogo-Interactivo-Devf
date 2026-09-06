@@ -11,7 +11,7 @@ export const getProducts = async (params = {}) => {
       return response.data;
     }
     return allProducts;
-  } catch (error) {
+  } catch {
     // Si el backend aún no está encendido o no responde, utilizamos los datos locales de respaldo
     console.info('[productService] Backend no disponible, utilizando mockData local.');
     return allProducts;
@@ -26,7 +26,7 @@ export const getProductById = async (id) => {
       return response.data;
     }
     return getMockProductById(id);
-  } catch (error) {
+  } catch {
     console.info(`[productService] Detalle de producto #${id} obtenido desde mockData local.`);
     return getMockProductById(id);
   }
@@ -40,7 +40,7 @@ export const getPromociones = async () => {
       return response.data;
     }
     return promocionesData;
-  } catch (error) {
+  } catch {
     return promocionesData;
   }
 };

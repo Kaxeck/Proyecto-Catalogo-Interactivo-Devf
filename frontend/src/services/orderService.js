@@ -10,7 +10,7 @@ export const createOrderRequest = async (orderData) => {
       success: true,
       order: response.data.order || response.data,
     };
-  } catch (error) {
+  } catch {
     console.info('[orderService] Backend offline, registrando orden local simulada.');
     return {
       success: true,
@@ -30,7 +30,7 @@ export const getMyOrdersRequest = async () => {
   try {
     const response = await api.get('/orders/my-orders');
     return response.data || [];
-  } catch (error) {
+  } catch {
     return [];
   }
 };
