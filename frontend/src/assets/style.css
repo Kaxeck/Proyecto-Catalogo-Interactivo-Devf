@@ -491,6 +491,28 @@ h3 {
     box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
 }
 
+.catalogo-buscador.has-error {
+    border-color: #E74C3C;
+    background: #FFFBFB;
+}
+
+.catalogo-buscador.has-error:focus-within {
+    border-color: #C0392B;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
+.catalogo-busqueda-error {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    color: #E74C3C;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    margin-top: 6px;
+    animation: fadeIn 0.2s ease;
+}
+
 .catalogo-buscador input {
     border: none;
     background: transparent;
@@ -835,12 +857,34 @@ footer p {
     font-family: "Inter", sans-serif;
 }
 
+.form-suscripcion input.has-error {
+    border: 2px solid #C0392B !important;
+    background-color: #FFF5F5 !important;
+}
+
 .newsletter-feedback {
-    margin-top: 8px;
-    font-size: 0.9rem;
-    color: #1a493f;
-    font-weight: bold;
+    margin-top: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
     font-family: "Inter", sans-serif;
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    animation: fadeIn 0.2s ease;
+}
+
+.newsletter-feedback.error {
+    color: #900C3F;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(144, 12, 63, 0.3);
+}
+
+.newsletter-feedback.exito {
+    color: #1a493f;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(26, 73, 63, 0.3);
 }
 
 .listas-footer {
@@ -1912,6 +1956,32 @@ footer p {
     border-color: #2C3E50;
     background: white;
     box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.08);
+}
+
+.auth-input-wrapper.has-error {
+    border-color: #E74C3C;
+    background: #FFFBFB;
+}
+
+.auth-input-wrapper.has-error:focus-within {
+    border-color: #C0392B;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
+.auth-error-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    color: #E74C3C;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    margin-top: 4px;
+    animation: fadeIn 0.2s ease;
+}
+
+.auth-error-inline i {
+    font-size: 14px;
 }
 
 .auth-input-icono {
