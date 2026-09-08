@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const ideaRoutes = require('./routes/ideaRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 
 // Cargar variables de entorno desde el archivo .env
@@ -39,6 +41,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/ideas', ideaRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Middlewares de manejo de errores HTTP y 404
 app.use(notFound);

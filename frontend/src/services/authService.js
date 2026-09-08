@@ -32,10 +32,19 @@ const extractErrorMessage = (error, defaultFallback) => {
 export const loginRequest = async (email, password) => {
   try {
     const response = await api.post('/auth/login', { email, password });
+    const rawUser = response.data.user || response.data;
+    const user = {
+      id: rawUser._id || rawUser.id,
+      _id: rawUser._id || rawUser.id,
+      nombre: rawUser.nombre,
+      email: rawUser.email,
+      telefono: rawUser.telefono,
+      rol: rawUser.rol,
+    };
     return {
       success: true,
       token: response.data.token,
-      user: response.data.user,
+      user,
     };
   } catch (error) {
     const mensaje = extractErrorMessage(
@@ -54,10 +63,19 @@ export const loginRequest = async (email, password) => {
 export const registerRequest = async (userData) => {
   try {
     const response = await api.post('/auth/register', userData);
+    const rawUser = response.data.user || response.data;
+    const user = {
+      id: rawUser._id || rawUser.id,
+      _id: rawUser._id || rawUser.id,
+      nombre: rawUser.nombre,
+      email: rawUser.email,
+      telefono: rawUser.telefono,
+      rol: rawUser.rol,
+    };
     return {
       success: true,
       token: response.data.token,
-      user: response.data.user,
+      user,
     };
   } catch (error) {
     const mensaje = extractErrorMessage(
