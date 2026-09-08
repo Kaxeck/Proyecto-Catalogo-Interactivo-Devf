@@ -71,13 +71,9 @@ const AuthPage = ({ defaultTab = 'login' }) => {
       ? 'registro'
       : 'login';
 
-  // Sincronizar limpieza de mensajes cuando cambia la ruta
-  const [prevPath, setPrevPath] = useState(location.pathname);
-  if (prevPath !== location.pathname) {
-    setPrevPath(location.pathname);
-    setMensajeError('');
-    setMensajeExito('');
-  }
+  // Mensajes de retroalimentación de la API o servidor
+  const [mensajeError, setMensajeError] = useState('');
+  const [mensajeExito, setMensajeExito] = useState('');
 
   const cambiarTab = (nuevaTab) => {
     navigate(nuevaTab === 'registro' ? '/registro' : '/login');
@@ -88,10 +84,6 @@ const AuthPage = ({ defaultTab = 'login' }) => {
   // Visibilidad de contraseñas
   const [mostrarPasswordLogin, setMostrarPasswordLogin] = useState(false);
   const [mostrarPasswordReg, setMostrarPasswordReg] = useState(false);
-
-  // Mensajes de retroalimentación de la API o servidor
-  const [mensajeError, setMensajeError] = useState('');
-  const [mensajeExito, setMensajeExito] = useState('');
 
   // 1. Hook Form para Inicio de Sesión
   const {
