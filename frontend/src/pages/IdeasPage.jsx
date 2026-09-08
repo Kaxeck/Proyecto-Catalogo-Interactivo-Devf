@@ -15,7 +15,7 @@ const IdeasPage = () => {
         setCargando(true);
         const data = await getIdeas();
         if (isMounted) setIdeas(data);
-      } catch (err) {
+      } catch {
         if (isMounted) setError('No se pudieron cargar las ideas.');
       } finally {
         if (isMounted) setCargando(false);

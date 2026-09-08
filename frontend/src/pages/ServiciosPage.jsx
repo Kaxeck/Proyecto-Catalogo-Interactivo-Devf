@@ -15,7 +15,7 @@ const ServiciosPage = () => {
         setCargando(true);
         const data = await getServices();
         if (isMounted) setServicios(data);
-      } catch (err) {
+      } catch {
         if (isMounted) setError('No se pudieron cargar los servicios.');
       } finally {
         if (isMounted) setCargando(false);

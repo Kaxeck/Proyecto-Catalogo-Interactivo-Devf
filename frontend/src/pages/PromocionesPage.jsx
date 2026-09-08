@@ -19,7 +19,7 @@ const PromocionesPage = () => {
         if (isMounted) {
           setPromociones(data);
         }
-      } catch (err) {
+      } catch {
         if (isMounted) {
           setError('No fue posible cargar las promociones desde el servidor.');
         }

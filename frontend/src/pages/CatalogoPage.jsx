@@ -14,23 +14,42 @@ const CatalogoPage = () => {
   const [categoriaActiva, setCategoriaActiva] = useState('Todos');
   const [ordenPrecio, setOrdenPrecio] = useState('default');
 
-  const cargarProductos = async () => {
-    try {
-      setCargando(true);
-      setErrorCarga(null);
-      const data = await getProducts();
-      setProductos(data);
-    } catch (err) {
-      console.error('Error cargando catálogo:', err);
-      setErrorCarga('No se pudieron cargar los productos desde el servidor.');
-    } finally {
-      setCargando(false);
-    }
-  };
-
   useEffect(() => {
-    cargarProductos();
+    let isMounted = true;
+    getProducts()
+      .then((data) => {
+        if (isMounted) {
+          setProductos(data);
+          setCargando(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Error cargando catálogo:', err);
+        if (isMounted) {
+          setErrorCarga('No se pudieron cargar los productos desde el servidor.');
+          setCargando(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const handleReintentar = () => {
+    setCargando(true);
+    setErrorCarga(null);
+    getProducts()
+      .then((data) => {
+        setProductos(data);
+        setCargando(false);
+      })
+      .catch((err) => {
+        console.error('Error cargando catálogo:', err);
+        setErrorCarga('No se pudieron cargar los productos desde el servidor.');
+        setCargando(false);
+      });
+  };
 
   // Sanitiza y valida la entrada del usuario en el buscador
   const handleBusquedaChange = (e) => {
@@ -160,7 +179,7 @@ const CatalogoPage = () => {
             <button
               type="button"
               className="btn btn-primary"
-              onClick={cargarProductos}
+              onClick={handleReintentar}
               style={{ padding: '10px 24px' }}
             >
               Reintentar
