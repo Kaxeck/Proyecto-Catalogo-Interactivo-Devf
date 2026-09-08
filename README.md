@@ -1,12 +1,12 @@
-# 🛋️ DecoHome — Catálogo Interactivo de Muebles
+# 🛋️ Nordic — Catálogo Interactivo de Muebles
 
-Proyecto desarrollado bajo el stack MERN (MongoDB, Express, React con Vite, Node.js), enfocado en la exploración interactiva, filtrado y gestión de mobiliario para el hogar y oficina. La arquitectura está modularizada de forma desacoplada entre cliente (Frontend) y servidor (Backend y Base de Datos).
+Proyecto desarrollado bajo el stack MERN (MongoDB Atlas, Express, React con Vite, Node.js), enfocado en la exploración interactiva, filtrado y gestión de mobiliario nórdico para el hogar y oficina. La arquitectura está modularizada de forma desacoplada entre cliente (Frontend) y servidor (Backend y Base de Datos).
 
 ---
 
 ## 📋 Descripción del Proyecto
 
-**DecoHome** es una aplicación web interactiva diseñada para la visualización y exploración ágil de un catálogo de muebles contemporáneos. La plataforma permite a los usuarios:
+**Nordic** es una aplicación web interactiva diseñada para la visualización y exploración ágil de un catálogo de muebles contemporáneos. La plataforma permite a los usuarios:
 
 * 🗂️ Navegar por colecciones organizadas por categorías (Salas, Recámaras, Comedores, Oficina y Exterior).
 * 🔍 Realizar búsquedas en tiempo real.
@@ -83,5 +83,5 @@ El desarrollo del proyecto sigue el estándar de ramificación Git Flow:
 * **Frontend Developer:** [@Kaxeck](https://github.com/Kaxeck)
   * Responsable del diseño visual, maquetación responsive, componentes modulares, enrutamiento SPA y estado global del carrito de compras.
 
-* **Backend & Database Developer:** Colaborador asignado *(o en equipo)*
+* **Backend & Database Developer:** [@legh27](https://github.com/legh27)
   * Responsable de la arquitectura del servidor con Express/Node.js, modelado de esquemas y conexión a MongoDB Atlas, endpoints de la API REST y autenticación de usuarios.
