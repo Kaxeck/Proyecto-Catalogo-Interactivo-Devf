@@ -44,8 +44,8 @@ function App() {
           <Route path="/producto/:id" element={<ProductDetailPage />} />
           <Route path="/ideas" element={<IdeasPage />} />
           <Route path="/servicios" element={<ServiciosPage />} />
-          <Route path="/login" element={<AuthPage defaultTab="login" />} />
-          <Route path="/registro" element={<AuthPage defaultTab="registro" />} />
+          <Route path="/login" element={<AuthPage key="login" defaultTab="login" />} />
+          <Route path="/registro" element={<AuthPage key="registro" defaultTab="registro" />} />
 
           {/* Rutas Privadas: protegidas con JWT mediante el componente PrivateRoute */}
           <Route

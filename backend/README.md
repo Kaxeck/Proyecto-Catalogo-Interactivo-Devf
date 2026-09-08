@@ -133,3 +133,11 @@ El servidor estará escuchando en `http://localhost:5000`.
   "total": 500
 }
 ```
+
+---
+
+## 👥 Equipo de Desarrollo
+
+* **Backend & Database Developer:** [@legh27](https://github.com/legh27)
+  * Arquitectura de servidor en Node.js/Express, conexión con MongoDB Atlas, API REST y autenticación JWT.
+
