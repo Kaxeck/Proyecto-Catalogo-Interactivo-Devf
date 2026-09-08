@@ -1,46 +1,44 @@
 import { api } from '../api';
-import { allProducts, getProductById as getMockProductById, promocionesData } from '../data/mockData';
 
-// Servicio de Productos: consume la API REST de Express con fallback automático a mockData si el servidor está apagado
+/**
+ * Servicio de Productos: Consume la API RESTful de Express conectada a MongoDB Atlas
+ */
 
-// Obtiene la lista completa de productos con soporte para filtros
+// Obtiene la lista completa de productos desde la base de datos (con soporte para filtros de categoría y búsqueda)
 export const getProducts = async (params = {}) => {
   try {
     const response = await api.get('/products', { params });
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
-    return allProducts;
-  } catch {
-    // Si el backend aún no está encendido o no responde, utilizamos los datos locales de respaldo
-    console.info('[productService] Backend no disponible, utilizando mockData local.');
-    return allProducts;
+    return [];
+  } catch (error) {
+    console.error('[productService] Error al obtener productos del backend:', error);
+    throw error;
   }
 };
 
-// Obtiene la ficha técnica de un producto por su ID
+// Obtiene la ficha técnica de un producto por su ID (_id) desde MongoDB
 export const getProductById = async (id) => {
   try {
     const response = await api.get(`/products/${id}`);
-    if (response.data) {
-      return response.data;
-    }
-    return getMockProductById(id);
-  } catch {
-    console.info(`[productService] Detalle de producto #${id} obtenido desde mockData local.`);
-    return getMockProductById(id);
+    return response.data;
+  } catch (error) {
+    console.error(`[productService] Error al obtener producto #${id}:`, error);
+    throw error;
   }
 };
 
-// Obtiene los muebles destacados en promoción para el carrusel
+// Obtiene los muebles destacados en promoción o con descuento desde MongoDB
 export const getPromociones = async () => {
   try {
     const response = await api.get('/products/promociones');
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
-    return promocionesData;
-  } catch {
-    return promocionesData;
+    return [];
+  } catch (error) {
+    console.error('[productService] Error al obtener promociones del backend:', error);
+    throw error;
   }
 };

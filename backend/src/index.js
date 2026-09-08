@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const ideaRoutes = require('./routes/ideaRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 
 // Cargar variables de entorno desde el archivo .env
@@ -15,10 +17,22 @@ connectDB();
 
 const app = express();
 
-// Middleware para habilitar CORS (aceptar peticiones desde el frontend)
+// Middleware para habilitar CORS (soporta localhost, dominios de Vercel y FRONTEND_URL)
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Permitir peticiones de servidor a servidor (sin origin), dominios de desarrollo y despliegues en Vercel
+      if (
+        !origin ||
+        origin.includes('localhost') ||
+        origin.endsWith('.vercel.app') ||
+        (process.env.FRONTEND_URL && origin.startsWith(process.env.FRONTEND_URL))
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true
   })
 );
@@ -39,6 +53,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/ideas', ideaRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Middlewares de manejo de errores HTTP y 404
 app.use(notFound);
