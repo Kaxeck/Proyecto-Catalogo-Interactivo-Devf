@@ -17,10 +17,22 @@ connectDB();
 
 const app = express();
 
-// Middleware para habilitar CORS (aceptar peticiones desde el frontend)
+// Middleware para habilitar CORS (soporta localhost, dominios de Vercel y FRONTEND_URL)
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Permitir peticiones de servidor a servidor (sin origin), dominios de desarrollo y despliegues en Vercel
+      if (
+        !origin ||
+        origin.includes('localhost') ||
+        origin.endsWith('.vercel.app') ||
+        (process.env.FRONTEND_URL && origin.startsWith(process.env.FRONTEND_URL))
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true
   })
 );
