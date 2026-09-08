@@ -2,6 +2,10 @@
 
 Proyecto desarrollado bajo el stack MERN (MongoDB Atlas, Express, React con Vite, Node.js), enfocado en la exploración interactiva, filtrado y gestión de mobiliario nórdico para el hogar y oficina. La arquitectura está modularizada de forma desacoplada entre cliente (Frontend) y servidor (Backend y Base de Datos).
 
+Pagina Web
+https://proyecto-catalogo-interactivo-devf.vercel.app/
+
+
 ---
 
 ## 📋 Descripción del Proyecto
