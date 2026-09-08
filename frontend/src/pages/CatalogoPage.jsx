@@ -1,15 +1,55 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import ProductCard from '../components/products/ProductCard';
-import { allProducts } from '../data/mockData';
+import { getProducts } from '../services/productService';
 
 const categorias = ['Todos', 'Salas', 'Comedores', 'Recámaras', 'Estanterías', 'Oficina', 'Decoración'];
 
-// Página de Catálogo: exploración completa con barra de búsqueda reactiva, filtros por categoría y ordenamiento por precio
+// Página de Catálogo: exploración completa con datos reales de MongoDB Atlas
 const CatalogoPage = () => {
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [errorBusqueda, setErrorBusqueda] = useState('');
   const [categoriaActiva, setCategoriaActiva] = useState('Todos');
   const [ordenPrecio, setOrdenPrecio] = useState('default');
+
+  useEffect(() => {
+    let isMounted = true;
+    getProducts()
+      .then((data) => {
+        if (isMounted) {
+          setProductos(data);
+          setCargando(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Error cargando catálogo:', err);
+        if (isMounted) {
+          setErrorCarga('No se pudieron cargar los productos desde el servidor.');
+          setCargando(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleReintentar = () => {
+    setCargando(true);
+    setErrorCarga(null);
+    getProducts()
+      .then((data) => {
+        setProductos(data);
+        setCargando(false);
+      })
+      .catch((err) => {
+        console.error('Error cargando catálogo:', err);
+        setErrorCarga('No se pudieron cargar los productos desde el servidor.');
+        setCargando(false);
+      });
+  };
 
   // Sanitiza y valida la entrada del usuario en el buscador
   const handleBusquedaChange = (e) => {
@@ -40,9 +80,9 @@ const CatalogoPage = () => {
   // Filtra y ordena los productos en memoria según los criterios seleccionados
   const productosFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
-    return allProducts
+    return productos
       .filter((p) => {
-        const coincideNombre = termino === '' || p.nombre.toLowerCase().includes(termino);
+        const coincideNombre = termino === '' || (p.nombre && p.nombre.toLowerCase().includes(termino));
         const coincideCategoria =
           categoriaActiva === 'Todos' || p.categoria === categoriaActiva;
         return coincideNombre && coincideCategoria;
@@ -55,7 +95,7 @@ const CatalogoPage = () => {
         if (ordenPrecio === 'mayor') return precioB - precioA;
         return 0;
       });
-  }, [busqueda, categoriaActiva, ordenPrecio]);
+  }, [productos, busqueda, categoriaActiva, ordenPrecio]);
 
   return (
     <main style={{ paddingBottom: '3rem' }}>
@@ -120,45 +160,76 @@ const CatalogoPage = () => {
           </div>
         </div>
 
-        {/* Contador de resultados */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', color: '#7F8C8D', fontSize: '0.92rem' }}>
-          <span>
-            Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{allProducts.length}</strong> muebles disponibles
-          </span>
-          {busqueda && (
-            <span style={{ color: '#2C3E50', fontWeight: 500 }}>
-              Filtro activo: &ldquo;{busqueda}&rdquo;
-            </span>
-          )}
-        </div>
-
-        {productosFiltrados.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-            <i className="bx bx-search-alt" style={{ fontSize: '50px', color: '#BDC3C7' }}></i>
-            <h3 style={{ marginTop: '1rem', color: '#2C3E50' }}>No se encontraron muebles</h3>
-            <p style={{ color: '#7F8C8D', marginBottom: '1.5rem' }}>
-              {busqueda
-                ? `No existen coincidencias para "${busqueda}" en la categoría ${categoriaActiva}.`
-                : 'No hay muebles disponibles en esta categoría.'}
+        {/* Estado de carga */}
+        {cargando && (
+          <div style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+            <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '42px', color: '#2C3E50' }}></i>
+            <p style={{ marginTop: '1rem', color: '#7F8C8D', fontSize: '1.05rem' }}>
+              Cargando catálogo desde la base de datos...
             </p>
+          </div>
+        )}
+
+        {/* Estado de error */}
+        {!cargando && errorCarga && (
+          <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+            <i className="bx bx-error-circle" style={{ fontSize: '48px', color: '#E74C3C' }}></i>
+            <h3 style={{ marginTop: '1rem', color: '#2C3E50' }}>Ocurrió un error</h3>
+            <p style={{ color: '#7F8C8D', marginBottom: '1.5rem' }}>{errorCarga}</p>
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                handleLimpiarBusqueda();
-                setCategoriaActiva('Todos');
-              }}
-              style={{ padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              className="btn btn-primary"
+              onClick={handleReintentar}
+              style={{ padding: '10px 24px' }}
             >
-              <i className="bx bx-reset"></i> Restablecer Búsqueda y Filtros
+              Reintentar
             </button>
           </div>
-        ) : (
-          <div className="catalogo-grid">
-            {productosFiltrados.map((producto) => (
-              <ProductCard key={producto.id} producto={producto} />
-            ))}
-          </div>
+        )}
+
+        {/* Contador de resultados */}
+        {!cargando && !errorCarga && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', color: '#7F8C8D', fontSize: '0.92rem' }}>
+              <span>
+                Mostrando <strong>{productosFiltrados.length}</strong> de <strong>{productos.length}</strong> muebles disponibles
+              </span>
+              {busqueda && (
+                <span style={{ color: '#2C3E50', fontWeight: 500 }}>
+                  Filtro activo: &ldquo;{busqueda}&rdquo;
+                </span>
+              )}
+            </div>
+
+            {productosFiltrados.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+                <i className="bx bx-search-alt" style={{ fontSize: '50px', color: '#BDC3C7' }}></i>
+                <h3 style={{ marginTop: '1rem', color: '#2C3E50' }}>No se encontraron muebles</h3>
+                <p style={{ color: '#7F8C8D', marginBottom: '1.5rem' }}>
+                  {busqueda
+                    ? `No existen coincidencias para "${busqueda}" en la categoría ${categoriaActiva}.`
+                    : 'No hay muebles disponibles en esta categoría.'}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    handleLimpiarBusqueda();
+                    setCategoriaActiva('Todos');
+                  }}
+                  style={{ padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <i className="bx bx-reset"></i> Restablecer Búsqueda y Filtros
+                </button>
+              </div>
+            ) : (
+              <div className="catalogo-grid">
+                {productosFiltrados.map((producto) => (
+                  <ProductCard key={producto.id || producto._id} producto={producto} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>

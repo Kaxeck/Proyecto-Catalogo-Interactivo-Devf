@@ -1,35 +1,78 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { allProducts, getProductById } from '../data/mockData';
+import { getProductById, getProducts } from '../services/productService';
 import { useCart } from '../hooks/useCart';
 import ProductCard from '../components/products/ProductCard';
 import Boton from '../components/common/Boton';
 
-// Página de Detalle de Producto: vista exhaustiva del mueble con galería, especificaciones, selector de unidades y recomendados
+// Página de Detalle de Producto: consulta la ficha técnica desde MongoDB Atlas
 const ProductDetailPage = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
 
+  const [producto, setProducto] = useState(null);
+  const [relacionados, setRelacionados] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
   const [cantidad, setCantidad] = useState(1);
   const [esFavorito, setEsFavorito] = useState(false);
 
-  // Búsqueda síncrona y optimizada del producto por su identificador único
-  const producto = useMemo(() => getProductById(id), [id]);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDetalle = async () => {
+      try {
+        setCargando(true);
+        setError(null);
+        const data = await getProductById(id);
+        if (!data) {
+          throw new Error('Producto no encontrado');
+        }
+        if (isMounted) {
+          setProducto(data);
+          // Cargar productos relacionados de la misma categoría
+          try {
+            const all = await getProducts();
+            if (isMounted && Array.isArray(all)) {
+              const otros = all.filter((p) => (p.id || p._id) !== (data.id || data._id));
+              const mismaCat = otros.filter((p) => p.categoria === data.categoria);
+              setRelacionados((mismaCat.length >= 3 ? mismaCat : otros).slice(0, 4));
+            }
+          } catch {
+            // Relacionados opcionales
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'No se pudo cargar el producto');
+        }
+      } finally {
+        if (isMounted) {
+          setCargando(false);
+        }
+      }
+    };
 
-  // Obtiene sugerencias de muebles de la misma categoría o catálogo general
-  const relacionados = useMemo(() => {
-    if (!producto) return [];
-    const otros = allProducts.filter((p) => p.id !== producto.id);
-    const mismaCat = otros.filter((p) => p.categoria === producto.categoria);
-    return (mismaCat.length >= 3 ? mismaCat : otros).slice(0, 4);
-  }, [producto]);
+    fetchDetalle();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
-  if (!producto) {
+  if (cargando) {
+    return (
+      <main style={{ minHeight: '60vh', textAlign: 'center', padding: '5rem 1rem' }}>
+        <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '42px', color: '#2C3E50' }}></i>
+        <p style={{ marginTop: '1rem', color: '#7F8C8D' }}>Cargando detalles del mueble...</p>
+      </main>
+    );
+  }
+
+  if (error || !producto) {
     return (
       <main style={{ minHeight: '60vh', textAlign: 'center', padding: '4rem 1rem' }}>
         <h2 style={{ color: '#2C3E50' }}>Producto no encontrado</h2>
         <p style={{ color: '#7F8C8D', marginBottom: '2rem' }}>
-          El mueble que buscas no está disponible o ha cambiado de dirección.
+          El mueble que buscas no está disponible en la base de datos o ha cambiado de identificador.
         </p>
         <Link to="/catalogo">
           <Boton texto="Volver al Catálogo" className="btn-primary" />
@@ -98,7 +141,9 @@ const ProductDetailPage = () => {
               {producto.precioOriginal && (
                 <span className="detalle-precio-tachado">${producto.precioOriginal}</span>
               )}
-              <span className="detalle-precio-actual">${producto.precioDescuento} MXN</span>
+              <span className="detalle-precio-actual">
+                ${producto.precioDescuento || producto.precioOriginal} MXN
+              </span>
               {calcularDescuento() && (
                 <span className="detalle-descuento-tag">{calcularDescuento()}</span>
               )}
@@ -111,21 +156,21 @@ const ProductDetailPage = () => {
                 <i className="bx bx-ruler"></i>
                 <div>
                   <strong>Dimensiones:</strong>
-                  <p>{producto.dimensiones}</p>
+                  <p>{producto.dimensiones || 'Dimensiones estándar'}</p>
                 </div>
               </div>
               <div className="especificacion-item">
                 <i className="bx bx-cube"></i>
                 <div>
                   <strong>Materiales:</strong>
-                  <p>{producto.materiales}</p>
+                  <p>{producto.materiales || 'Madera tratada y acabados finos'}</p>
                 </div>
               </div>
               <div className="especificacion-item">
                 <i className="bx bx-check-shield"></i>
                 <div>
                   <strong>Garantía:</strong>
-                  <p>{producto.garantia}</p>
+                  <p>{producto.garantia || '1 año de garantía de fábrica'}</p>
                 </div>
               </div>
             </div>
@@ -174,7 +219,7 @@ const ProductDetailPage = () => {
             <h2>Productos Relacionados</h2>
             <div className="catalogo-grid">
               {relacionados.map((rel) => (
-                <ProductCard key={rel.id} producto={rel} />
+                <ProductCard key={rel.id || rel._id} producto={rel} />
               ))}
             </div>
           </section>

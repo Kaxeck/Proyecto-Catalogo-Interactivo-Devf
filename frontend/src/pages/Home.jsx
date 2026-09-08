@@ -1,13 +1,55 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PromotionCarousel from '../components/products/PromotionCarousel';
 import ProductCard from '../components/products/ProductCard';
 import IdeaCard from '../components/ideas/IdeaCard';
 import ServiceCard from '../components/services/ServiceCard';
 import Boton from '../components/common/Boton';
-import { promocionesData, catalogoData, ideasData, serviciosData } from '../data/mockData';
+import { getPromociones, getProducts } from '../services/productService';
+import { getIdeas, getServices } from '../services/contentService';
 
-// Página de Inicio (Home): presenta el banner principal interactivo, carrusel de promociones, catálogo destacado, ideas y servicios
+// Página de Inicio (Home): 100% conectada a MongoDB Atlas (Promociones, Catálogo, Ideas y Servicios)
 const Home = () => {
+  const [promociones, setPromociones] = useState([]);
+  const [catalogo, setCatalogo] = useState([]);
+  const [ideas, setIdeas] = useState([]);
+  const [servicios, setServicios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const cargarDatos = async () => {
+      try {
+        setCargando(true);
+        const [promosData, productsData, ideasData, servicesData] = await Promise.all([
+          getPromociones(),
+          getProducts(),
+          getIdeas(),
+          getServices()
+        ]);
+
+        if (isMounted) {
+          setPromociones(promosData);
+          setCatalogo(productsData.slice(0, 8));
+          setIdeas(ideasData);
+          setServicios(servicesData);
+        }
+      } catch (err) {
+        console.error('Error cargando datos de inicio:', err);
+      } finally {
+        if (isMounted) {
+          setCargando(false);
+        }
+      }
+    };
+
+    cargarDatos();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <main>
       {/* Sección Hero / Presentación con imagen responsiva (picture) */}
@@ -42,16 +84,28 @@ const Home = () => {
 
       <section className="espacio_promociones" id="promociones">
         <h2>Promociones</h2>
-        <PromotionCarousel productos={promocionesData} />
+        {cargando ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '36px', color: '#2C3E50' }}></i>
+          </div>
+        ) : (
+          <PromotionCarousel productos={promociones} />
+        )}
       </section>
 
       <section className="espacio_lateral" id="catalogo">
         <h2>Catálogo</h2>
-        <div className="catalogo-grid">
-          {catalogoData.map((producto) => (
-            <ProductCard key={producto.id} producto={producto} />
-          ))}
-        </div>
+        {cargando ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <i className="bx bx-loader-alt bx-spin" style={{ fontSize: '36px', color: '#2C3E50' }}></i>
+          </div>
+        ) : (
+          <div className="catalogo-grid">
+            {catalogo.map((producto) => (
+              <ProductCard key={producto.id || producto._id} producto={producto} />
+            ))}
+          </div>
+        )}
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <Link to="/catalogo">
             <Boton
@@ -66,8 +120,8 @@ const Home = () => {
       <section className="espacio_lateral_idea" id="ideas">
         <h2>Ideas</h2>
         <div>
-          {ideasData.map((idea) => (
-            <IdeaCard key={idea.id} idea={idea} />
+          {ideas.map((idea) => (
+            <IdeaCard key={idea.id || idea._id} idea={idea} />
           ))}
         </div>
       </section>
@@ -75,8 +129,8 @@ const Home = () => {
       <section id="servicios">
         <h2>Servicios</h2>
         <div className="servicios-contenedor">
-          {serviciosData.map((servicio) => (
-            <ServiceCard key={servicio.id} servicio={servicio} />
+          {servicios.map((servicio) => (
+            <ServiceCard key={servicio.id || servicio._id} servicio={servicio} />
           ))}
         </div>
       </section>

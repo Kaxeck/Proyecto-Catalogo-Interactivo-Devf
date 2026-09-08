@@ -59,7 +59,14 @@ const productSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        ret.id = ret._id;
+        return ret;
+      }
+    }
   }
 );
 
